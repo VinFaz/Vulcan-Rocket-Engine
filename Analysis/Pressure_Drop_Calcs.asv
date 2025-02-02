@@ -1,0 +1,48 @@
+Pc = 200; %psi
+injector_stiffness = .3;
+
+rho_fuel = 786; %kg/m^3
+mdot_fuel = .0517; %kg/s
+rho_ox = 23.247; %kg/m^3	
+mdot_ox = .0517; %kg/s
+
+fuel_line_dia = .25; %in
+ox_line_dia = 3/8; %in
+tube_wall_thickness = 28; %thou
+
+%Conversions
+psi_to_Pa = 6895;
+cv_to_cda = 58888; %cv / cdA
+in_to_m = 0.0254; %m  / in
+pi = 3.1415;
+ft_to_m = 0.3048; %m / ft
+
+%Calculations
+Pc = 200 * psi_to_Pa;
+gamma_ox = .94671 / 0.66281;
+manifold_pressure = Pc * (1 + injector_stiffness); %Pa
+run_solenoid_cv = .2;
+gox_reg_cv = .8;
+run_solenoid_cda = run_solenoid_cv / cv_to_cda;
+gox_reg_cda = gox_reg_cv / cv_to_cda;
+
+%Fuel
+P_run_fuel = manifold_pressure + (((mdot_fuel / run_solenoid_cda)^2) / (2 * rho_fuel)); %inlet pressure of run valve
+fuel_line_A = pi * (in_to_m * ((fuel_line_dia / 2) - (tube_wall_thickness / 1000)))^2;
+fuel_line_vel = mdot_fuel / (rho_fuel * fuel_line_A);
+
+%GOX
+P_run_ox = Compressible_flow_P1(mdot_ox, rho_ox, 5, manifold_pressure, gamma_ox);
+reg_min_inlet_P = (mdot_ox / gox_reg_cda)^2 / ((rho_ox * gamma_ox * (2 / (gamma_ox + 1))^((gamma_ox + 1) / (gamma_ox - 1))));
+if(reg_min_inlet_P < P_run_ox)
+    ox_reg_P = P_run_ox;
+else
+    ox_reg_P = reg_min_inlet_P;
+end
+ox_line_A = pi * (in_to_m * ((ox_line_dia / 2) - (tube_wall_thickness / 1000)))^2;
+ox_line_vel = mdot_ox / (rho_ox * ox_li                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             ne_A);
+
+%Outputs
+
+fprintf("IPA Reg Set Pressure: %.3f psi | GOX Reg Set Pressure: %.3f psi\n", P_run_fuel / psi_to_Pa, ox_reg_P / psi_to_Pa);
+fprintf("Fuel Line Velocity: %.3f m/s | GOX Line Velocity: %.3f m/s\n", fuel_line_vel, ox_line_vel);
